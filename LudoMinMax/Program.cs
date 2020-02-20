@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace LudoMinMax
 {
@@ -11,6 +13,8 @@ namespace LudoMinMax
 
         static int[] p1Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         static int[] p2Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        static int homepawns1 = 0;
+        static int homepawns2 = 0;
         static int[][] initialState = { p1Rep, p2Rep };
         static Move move;
         static bool turn;
@@ -24,9 +28,10 @@ namespace LudoMinMax
             turn = true;
             move.homePawns = 0;
             int count = 0;
-            while(count < 30)
+            while(!endGame)
             { 
                 Move m = generateChanceNodes(move, turn);
+                Thread.Sleep(15);
                 Random roll = new Random();
                 int value = roll.Next(1, 7); //random roll between 1 and 6
                 Console.WriteLine("Turn: "+turn);
@@ -38,6 +43,8 @@ namespace LudoMinMax
                     {
                         //call to minmax
                         move = choseChildNode(child);
+                        if (move.score == 4 && turn == true) homepawns1++;
+                        if (move.score == 4 && turn == false) homepawns2++;
                         printRepresentation(move.Representation);
                         turn = !turn;
                         count++;
@@ -65,7 +72,7 @@ namespace LudoMinMax
             Move nextState = m;
             foreach(Move child in m.getChilds())
             {
-                if(child.score > value)
+                if(child.score >= value)
                 {
                     value = child.score;
                     nextState = child;
@@ -85,6 +92,7 @@ namespace LudoMinMax
                 newMove.Representation[0] = currentState;
                 newMove.parent = m;
                 newMove.chanceNode = i;
+                
                 currentState = m.Representation[1];
                 newMove.Representation[1] = currentState;
                 m.addChild(newMove);
@@ -113,7 +121,7 @@ namespace LudoMinMax
             {
                 //if chance state is 6 we can insert a pawn
                 //for now only 
-                if (m.chanceNode == 6 && m.Representation[0][0] == 0 && (pawnPositions1.Count + m.homePawns) != 4)
+                if (m.chanceNode == 6 && m.Representation[0][0] == 0 && (pawnPositions1.Count + homepawns1) != 4)
                 {
                     //setting new representation
                     currentState = reinitialize(m.Representation[0]);
@@ -146,42 +154,49 @@ namespace LudoMinMax
                             nextState.Representation[0] = currentState;
 
                             currentState = m.Representation[1];
-                            int pos1 = (position + m.chanceNode) % 48;
+                            int pos1 = (position + m.chanceNode + 24) % 48;
                             //updating 2nd player table;
                             if (currentState[pos1] == 2)
                             {
                                 currentState[pos1] = 0;
                                 nextState.Representation[1] = currentState;
                             }
-                            pos1 = Math.Abs(position - m.chanceNode);
-                            if(currentState[pos1] == 2)
-                            {
-                                currentState[pos1] = 0;
-                                nextState.Representation[1] = currentState;
+                            pos1 = (position + m.chanceNode - 24);
+                            if(pos1 > 0) { 
+                                if(currentState[pos1] == 2)
+                                {
+                                    currentState[pos1] = 0;
+                                    nextState.Representation[1] = currentState;
+                                }
                             }
                             nextState.score = 5;
+                      
+                            Console.WriteLine("Capture by " + maxPlayer);
                         }
                         //CHECK if this move sends a pawn home
                         else if(position + m.chanceNode > 47)
                         {
                             currentState[position] = 0;
                             nextState.Representation[0] = currentState;
-                            nextState.homePawns += 1;
+                            
                             currentState = m.Representation[1];
                             nextState.Representation[1] = currentState;
-                            nextState.score = 5;
+                            nextState.score = 4;
+                            MessageBox.Show("Pawn home by " + maxPlayer + " " +homepawns1);
+                            
                         }
                         else
                         {
                             currentState[position] = 0;
                             currentState[position + m.chanceNode] = 1;
                             nextState.Representation[0] = currentState;
+                            
                             currentState = m.Representation[1];
                             nextState.Representation[1] = currentState;
                             nextState.score = 2;
                         }
                         m.addChild(nextState);
-                        if (nextState.homePawns == 4)
+                        if (homepawns1 == 4 || homepawns2 == 4)
                             endGame = true;      
                     
 
@@ -193,7 +208,7 @@ namespace LudoMinMax
                 //min player
                 //if chance state is 6 we can insert a pawn
                 //for now only 
-                if (m.chanceNode == 6 && m.Representation[1][0] == 0 && (pawnPositions2.Count + m.homePawns) != 4)
+                if (m.chanceNode == 6 && m.Representation[1][0] == 0 && (pawnPositions2.Count + homepawns2) != 4)
                 {
                     //setting new representation
                     currentState = reinitialize(m.Representation[1]);
@@ -226,45 +241,53 @@ namespace LudoMinMax
                             nextState.Representation[1] = currentState;
 
                             currentState = m.Representation[0];
-                            int pos1 = (position + m.chanceNode) % 48;
+                            int pos1 = (position + m.chanceNode + 24) % 48;
                             //updating 2nd player table;
                             if (currentState[pos1] == 1)
                             {
                                 currentState[pos1] = 0;
                                 nextState.Representation[0] = currentState;
                             }
-                            pos1 = Math.Abs(position - m.chanceNode);
-                            if (currentState[pos1] == 1)
-                            {
-                                currentState[pos1] = 0;
-                                nextState.Representation[0] = currentState;
+                            pos1 = (position - 24 + m.chanceNode);
+                            if(pos1 > 0) { 
+                                if (currentState[pos1] == 1)
+                                {
+                                    currentState[pos1] = 0;
+                                    nextState.Representation[0] = currentState;
+                                }
                             }
                             nextState.score = 5;
                             
+                            Console.WriteLine("Capture by " + maxPlayer);
+
                         }
                         //CHECK if this move sends a pawn home
                         else if (position + m.chanceNode > 47)
                         {
                             currentState[position] = 0;
                             nextState.Representation[1] = currentState;
-                            nextState.homePawns += 1;
+                            
                             currentState = m.Representation[0];
                             nextState.Representation[0] = currentState;
-                            nextState.score = 5;
-                            
+                            nextState.score = 4;
+                            MessageBox.Show("Pawn home by " + maxPlayer+ " "+homepawns2);
+
                         }
                         else
                         {
                             currentState[position] = 0;
                             currentState[position + m.chanceNode] = 2;
                             nextState.Representation[1] = currentState;
+                            
                             currentState = m.Representation[0];
                             nextState.Representation[0] = currentState;
                             nextState.score = 2;
                         }
                         m.addChild(nextState);
-                        if (nextState.homePawns == 4)
+                        if (homepawns1 == 4 || homepawns2 == 4) { 
                             endGame = true;
+                            Console.WriteLine("Game Ended");
+                        }
 
 
                     }
