@@ -13,6 +13,7 @@ namespace LudoMinMax
         static int[] p2Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         static int[][] initialState = { p1Rep, p2Rep };
         static Move move;
+        static bool turn;
         public static bool endGame = false; // :D
         static void Main(string[] args)
         {
@@ -20,12 +21,60 @@ namespace LudoMinMax
             move = new Move();
             move.Representation = initialState;
             move.parent = null;
+            turn = true;
             move.homePawns = 0;
-            generateChanceNodes(move, true);
-
+            int count = 0;
+            while(count < 30)
+            { 
+                Move m = generateChanceNodes(move, turn);
+                Random roll = new Random();
+                int value = roll.Next(1, 7); //random roll between 1 and 6
+                Console.WriteLine("Turn: "+turn);
+                Console.WriteLine("Roll: " + value);
+                foreach(Move child in m.getChilds())
+                {
+                    //check for rolled chance node
+                    if(child.chanceNode == value)
+                    {
+                        //call to minmax
+                        move = choseChildNode(child);
+                        printRepresentation(move.Representation);
+                        turn = !turn;
+                        count++;
+                        break;
+                    }
+                }
+            }
         }
 
-        static void generateChanceNodes(Move m, bool maxPlayer)
+        static void printRepresentation(int[][] representation)
+        {
+            for(int i=0;i<representation.Count();i++)
+            {
+                for(int j=0;j<representation[i].Length;j++)
+                {
+                    Console.Write(representation[i][j] + " ");
+                }
+                Console.WriteLine();
+            }
+        }
+
+        static Move choseChildNode(Move m)
+        {
+            int value = 0;
+            Move nextState = m;
+            foreach(Move child in m.getChilds())
+            {
+                if(child.score > value)
+                {
+                    value = child.score;
+                    nextState = child;
+                }
+            }
+            return nextState;
+        }
+
+        static Move generateChanceNodes(Move m, bool maxPlayer)
         {
             //6 possible chances -> 6 chance nodes
             int[] currentState;
@@ -39,8 +88,9 @@ namespace LudoMinMax
                 currentState = m.Representation[1];
                 newMove.Representation[1] = currentState;
                 m.addChild(newMove);
-                checkNextStates(newMove, true);
+                checkNextStates(newMove, maxPlayer);
             }
+            return m;
         }
         static void checkNextStates(Move m, bool maxPlayer)
         {
@@ -184,7 +234,7 @@ namespace LudoMinMax
                                 nextState.Representation[0] = currentState;
                             }
                             pos1 = Math.Abs(position - m.chanceNode);
-                            if (currentState[pos1] == 2)
+                            if (currentState[pos1] == 1)
                             {
                                 currentState[pos1] = 0;
                                 nextState.Representation[0] = currentState;
@@ -235,9 +285,9 @@ namespace LudoMinMax
 
         public static bool checkIfCanAttack(int position, int nodeValue, List<int> list2)
         {
-            int value1 = (position + nodeValue) % 48;
-            int value2 = Math.Abs((position - nodeValue)) % 48;
-            if (list2.Contains(value1) || list2.Contains(value2))
+            int value1 = (position + nodeValue + 24) % 48;
+            int value2 = (position + nodeValue - 24) % 48;
+            if (list2.Contains(value1) || (list2.Contains(value2) && value2 > 0))
             {
                 return true;
             }
