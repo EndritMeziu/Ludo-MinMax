@@ -11,8 +11,8 @@ namespace LudoMinMax
     class Program
     {
 
-        static int[] p1Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0,0,0,0,0 };
-        static int[] p2Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 0,0,0,0,0 };
+        static int[] p1Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0,0 };
+        static int[] p2Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0,0 };
         static int homepawns1 = 0;
         static int homepawns2 = 0;
         static int[][] initialState = { p1Rep, p2Rep };
@@ -45,14 +45,14 @@ namespace LudoMinMax
                     if(child.chanceNode == value)
                     {
                         //call to minmax
-                        move = choseChildNode(child);
+                        move = minMax(child,turn);
                         string[,] matrix = transformRepresentation(move.Representation);
                         if (move.score == 4 && turn == true)
                         {
 
                             homepawns1++;
                         }
-                        if (move.score == 4 && turn == false)
+                        if (move.score == -4 && turn == false)
                         {
                             homepawns2++;
                         }
@@ -119,16 +119,33 @@ namespace LudoMinMax
             }
         }
 
-        static Move choseChildNode(Move m)
+        static Move minMax(Move m,bool player)
         {
-            int value = 0;
-            Move nextState = m;
-            foreach(Move child in m.getChilds())
-            {
-                if(child.score >= value)
+            Move nextState;
+            if (player)
+            { 
+                int value = int.MinValue;
+                nextState = m;
+                foreach(Move child in m.getChilds())
                 {
-                    value = child.score;
-                    nextState = child;
+                    if(child.score >= value)
+                    {
+                        value = child.score;
+                        nextState = child;
+                    }
+                }
+            }
+            else
+            {
+                int value = int.MaxValue;
+                nextState = m;
+                foreach (Move child in m.getChilds())
+                {
+                    if (child.score <= value)
+                    {
+                        value = child.score;
+                        nextState = child;
+                    }
                 }
             }
             return nextState;
@@ -184,6 +201,7 @@ namespace LudoMinMax
                     nextMove.parent = m;
                     nextMove.Representation[0] = currentState;
                     oponentState = reinitialize(m.Representation[1]);
+                    oponentState[24] = 0;
                     nextMove.Representation[1] = oponentState;
                     nextMove.score = 5; //as the max score;
                     m.addChild(nextMove);
@@ -290,8 +308,9 @@ namespace LudoMinMax
                     nextMove.parent = m;
                     nextMove.Representation[1] = currentState;
                     oponentState = reinitialize(m.Representation[0]);
+                    oponentState[24] = 0;
                     nextMove.Representation[0] = oponentState;
-                    nextMove.score = 5; //as the max score;
+                    nextMove.score = -5; //as the max score;
                     m.addChild(nextMove);
                 }
                 else
@@ -330,7 +349,7 @@ namespace LudoMinMax
                                     nextState.Representation[0] = oponentState;
                                 }
                             }
-                            nextState.score = 5;
+                            nextState.score = -5;
                             m.addChild(nextState);
 
                         }
@@ -347,7 +366,7 @@ namespace LudoMinMax
                             
                                 oponentState = reinitialize(m.Representation[0]);
                                 nextState.Representation[0] = oponentState;
-                                nextState.score = 4;
+                                nextState.score = -4;
                                 m.addChild(nextState);
                             }
                             else
@@ -358,7 +377,7 @@ namespace LudoMinMax
 
                                 oponentState = reinitialize(m.Representation[0]);
                                 nextState.Representation[0] = oponentState;
-                                nextState.score = 1;
+                                nextState.score = -1;
                                 m.addChild(nextState);
                             }
                         }
@@ -372,7 +391,7 @@ namespace LudoMinMax
                             
                             oponentState = reinitialize(m.Representation[0]);
                             nextState.Representation[0] = oponentState;
-                            nextState.score = 2;
+                            nextState.score = -2;
                             m.addChild(nextState);
                         }
                         
