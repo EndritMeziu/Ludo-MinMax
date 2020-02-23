@@ -27,6 +27,9 @@ namespace LudoMinMax
             move.parent = null;
             turn = true;
             move.homePawns = 0;
+
+            
+            
             int count = 0;
             while(!endGame)
             { 
@@ -45,13 +48,179 @@ namespace LudoMinMax
                         move = choseChildNode(child);
                         if (move.score == 4 && turn == true) homepawns1++;
                         if (move.score == 4 && turn == false) homepawns2++;
-                        printRepresentation(move.Representation);
+                        string[,] matrix = transformRepresentation(move.Representation);
+                        printMatrix(matrix);
+                        Console.ReadLine();
                         turn = !turn;
                         count++;
                         break;
                     }
                 }
             }
+            
+        }
+
+        static void printMatrix(string[,] matrix)
+        {
+            for (int i = 0; i < 13; i++)
+            {
+                for (int j = 0; j < 13; j++)
+                {
+                    Console.Write(matrix[i, j] + " ");
+                }
+                Console.WriteLine();
+            }
+            Console.WriteLine();
+        }
+
+        static string[,] transformRepresentation(int[][] representation)
+        {
+            string[,] transformed = new string[13, 13];
+            for (int i = 0; i < 13; i++)
+            {
+                for (int j = 0; j < 13; j++)
+                {
+                    transformed[i, j] = " ";
+                }
+            }
+           
+            int[] firstPlayer = representation[0];
+            int[] secondPlayer = representation[1];
+            
+
+            Dictionary<int, Tuple<int, int>> map = new Dictionary<int, Tuple<int, int>>();
+            Dictionary<int, Tuple<int, int>> map2 = new Dictionary<int, Tuple<int, int>>();
+
+            for (int i = 12; i > 6; i--)
+               map.Add(12 - i, new Tuple<int, int>(i, 5));// [0 - 5]
+
+            int offset = 2;
+            for (int i = 4; i >= 0; i--)
+            {
+                map.Add(i + offset, new Tuple<int, int>(7, i));//[6-10]
+                offset += 2;
+            }
+            map.Add(11, new Tuple<int, int>(6, 0)); //[11]
+
+            for (int i = 0; i < 6; i++)
+                map.Add(12 + i, new Tuple<int, int>(5, i)); //[12 -17]
+
+            offset = 0;
+            for (int i = 4; i >= 0; i--)
+            {
+                map.Add(18 + offset, new Tuple<int, int>(i, 5)); //[18-22]
+                offset += 1;
+            }
+
+            map.Add(23, new Tuple<int, int>(0, 6)); //[23]
+
+            for (int i = 0; i < 6; i++)
+                map.Add(24 + i, new Tuple<int, int>(i, 7)); //[24-29]
+
+            for (int i = 8; i <= 12; i++)
+                map.Add(22 + i, new Tuple<int, int>(5, i)); //[30-34]
+
+            map.Add(35, new Tuple<int, int>(6, 12)); // [35]
+
+            offset = 0;
+            for (int i = 12; i >= 7; i--)
+            {
+                map.Add(36 + offset, new Tuple<int, int>(7, i)); // [36-41]
+                offset += 1;
+            }
+
+            for (int i = 8; i <= 12; i++)
+                map.Add(34 + i, new Tuple<int, int>(i, 7)); // [42-46]
+
+            map.Add(47, new Tuple<int, int>(12, 6));
+
+            for (int i = 0; i < map.Count; i++)
+            {
+                Tuple<int,int> position = map[i];
+                int x = position.Item1;
+                int y = position.Item2;
+                transformed[x, y] = "0";
+            }
+
+            for (int i = 0; i < 6; i++)
+                map2.Add(i, new Tuple<int, int>(i, 7)); //[0 - 5]
+
+            for (int i = 8; i <= 12; i++)
+                map2.Add(i - 2, new Tuple<int, int>(5, i)); //[6-10]
+
+            map2.Add(11, new Tuple<int, int>(6, 12)); //[11]
+
+            offset = 12;
+            for (int i = 12; i > 6; i--)
+            {
+                map2.Add(offset, new Tuple<int, int>(7, i)); //[12 - 17]
+                offset += 1;
+            }
+
+            offset = 18;
+            for (int i = 8; i <= 12; i++)
+            {
+                map2.Add(offset, new Tuple<int, int>(i, 7)); //[18 - 22]
+                offset += 1;
+            }
+
+            map2.Add(23, new Tuple<int, int>(12, 6)); //[23]
+
+            offset = 24;
+            for (int i = 12; i > 6; i--)
+            {
+                map2.Add(offset, new Tuple<int, int>(i, 5)); //[24 - 29]
+                offset += 1;
+            }
+
+            offset = 30;
+            for (int i = 4; i >= 0; i--)
+            {
+                map2.Add(offset, new Tuple<int, int>(7, i)); //[30 - 34]
+                offset += 1;
+            }
+            map2.Add(35, new Tuple<int, int>(6, 0)); //[35]
+
+            for (int i = 0; i < 6; i++)
+                map2.Add(36 + i, new Tuple<int, int>(5, i)); //[36 - 41]
+
+            offset = 42;
+            for (int i = 4; i >= 0; i--)
+            {
+                map2.Add(offset, new Tuple<int, int>(i, 5)); //[42 - 46]
+                offset += 1;
+            }
+            map2.Add(47, new Tuple<int, int>(0, 6)); //[47]
+
+
+            List<int> indexes1 = new List<int>();
+            List<int> indexes2 = new List<int>();
+            for (int i = 0; i < firstPlayer.Length; i++)
+            {
+                if (firstPlayer[i] == 1)
+                    indexes1.Add(i);
+                if (secondPlayer[i] == 2)
+                    indexes2.Add(i);
+            }
+
+            for (int i = 0; i < indexes1.Count; i++)
+            {
+                int value = indexes1[i];
+                Tuple<int, int> position = map[value];
+                int x = position.Item1;
+                int y = position.Item2;
+                transformed[x, y] = "1";
+            }
+            for (int i = 0; i < indexes2.Count; i++)
+            {
+                int value = indexes2[i];
+                Tuple<int, int> position = map2[value];
+                int x = position.Item1;
+                int y = position.Item2;
+                transformed[x, y] = "2";
+            }
+
+            return transformed;
         }
 
         static void printRepresentation(int[][] representation)
@@ -154,14 +323,14 @@ namespace LudoMinMax
                             nextState.Representation[0] = currentState;
 
                             currentState = m.Representation[1];
-                            int pos1 = (position + m.chanceNode + 24) % 48;
+                            int pos1 = (position + m.chanceNode + 23) % 48;
                             //updating 2nd player table;
                             if (currentState[pos1] == 2)
                             {
                                 currentState[pos1] = 0;
                                 nextState.Representation[1] = currentState;
                             }
-                            pos1 = (position + m.chanceNode - 24);
+                            pos1 = (position + m.chanceNode - 23);
                             if(pos1 > 0) { 
                                 if(currentState[pos1] == 2)
                                 {
@@ -241,14 +410,14 @@ namespace LudoMinMax
                             nextState.Representation[1] = currentState;
 
                             currentState = m.Representation[0];
-                            int pos1 = (position + m.chanceNode + 24) % 48;
+                            int pos1 = (position + m.chanceNode + 23) % 48;
                             //updating 2nd player table;
                             if (currentState[pos1] == 1)
                             {
                                 currentState[pos1] = 0;
                                 nextState.Representation[0] = currentState;
                             }
-                            pos1 = (position - 24 + m.chanceNode);
+                            pos1 = (position - 23 + m.chanceNode);
                             if(pos1 > 0) { 
                                 if (currentState[pos1] == 1)
                                 {
@@ -308,8 +477,8 @@ namespace LudoMinMax
 
         public static bool checkIfCanAttack(int position, int nodeValue, List<int> list2)
         {
-            int value1 = (position + nodeValue + 24) % 48;
-            int value2 = (position + nodeValue - 24) % 48;
+            int value1 = (position + nodeValue + 23) % 48;
+            int value2 = (position + nodeValue - 23) % 48;
             if (list2.Contains(value1) || (list2.Contains(value2) && value2 > 0))
             {
                 return true;
