@@ -11,8 +11,8 @@ namespace LudoMinMax
     class Program
     {
 
-        static int[] p1Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        static int[] p2Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        static int[] p1Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0,0,0,0,0 };
+        static int[] p2Rep = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 2, 0, 0, 0, 0,0,0,0,0 };
         static int homepawns1 = 0;
         static int homepawns2 = 0;
         static int[][] initialState = { p1Rep, p2Rep };
@@ -27,7 +27,8 @@ namespace LudoMinMax
             move.parent = null;
             turn = true;
             move.homePawns = 0;
-            int count = 0;
+            int count =  p2Rep.Length;
+            
             while(!endGame)
             { 
                 Move m = generateChanceNodes(move, turn);                
@@ -66,9 +67,29 @@ namespace LudoMinMax
             
         }
 
-        static void setHomePawns(int[,] matrix)
+        static bool checkHomePawns(int value,int[] currentState,bool player)
         {
-            
+            if (value >= currentState.Length)
+                return false;
+            else
+            {
+                if(player)
+                {
+                    if (currentState[value] == 1)
+                        return false;
+                    else
+                        return true;
+                }
+                else
+                {
+                    if (currentState[value] == 2)
+                        return false;
+                    else
+                        return true;
+                }
+
+            }
+
         }
 
         static void printMatrix(string[,] matrix)
@@ -138,7 +159,7 @@ namespace LudoMinMax
             List<int> pawnPositions2 = new List<int>();
             int[] currentState;
             int[] oponentState;
-            for (int i = 0; i < m.Representation[0].Length; i++)
+            for (int i = 0; i < m.Representation[0].Length-4; i++)
             {
                 if (m.Representation[0][i] == 1)
                 {
@@ -210,17 +231,28 @@ namespace LudoMinMax
                         //CHECK if this move sends a pawn home
                         else if(position + m.chanceNode > 47)
                         {
-                            Move nextState = new Move();
-                            nextState.parent = m;
-                            currentState[position] = 0;
-                            nextState.Representation[0] = currentState;
+                            if(checkHomePawns(position + m.chanceNode, currentState, maxPlayer)) { 
+                                Move nextState = new Move();
+                                nextState.parent = m;
+                                currentState[position] = 0;
+                                currentState[position + m.chanceNode] = 1;
+                                nextState.Representation[0] = currentState;
 
-                            oponentState = reinitialize(m.Representation[1]);
-                            nextState.Representation[1] = oponentState;
-                            nextState.score = 4;
-                            m.addChild(nextState);
-                            MessageBox.Show("Pawn home by " + maxPlayer + " " +homepawns1);
-                            
+                                oponentState = reinitialize(m.Representation[1]);
+                                nextState.Representation[1] = oponentState;
+                                nextState.score = 4;
+                                m.addChild(nextState);
+                            }
+                            else
+                            {
+                                Move nextState = new Move();
+                                nextState.parent = m;
+                                nextState.Representation[0] = currentState;
+                                oponentState = reinitialize(m.Representation[1]);
+                                nextState.Representation[1] = oponentState;
+                                nextState.score = 1;
+                                m.addChild(nextState);
+                            }
                         }
                         else
                         {
@@ -305,17 +337,30 @@ namespace LudoMinMax
                         //CHECK if this move sends a pawn home
                         else if(position + m.chanceNode > 47)
                         {
-                            Move nextState = new Move();
-                            nextState.parent = m;
-                            currentState[position] = 0;
-                            nextState.Representation[1] = currentState;
+                            if(checkHomePawns(position+m.chanceNode,currentState,maxPlayer))
+                            { 
+                                Move nextState = new Move();
+                                nextState.parent = m;
+                                currentState[position] = 0;
+                                currentState[position+m.chanceNode] = 2;
+                                nextState.Representation[1] = currentState;
                             
-                            oponentState = reinitialize(m.Representation[0]);
-                            nextState.Representation[0] = oponentState;
-                            nextState.score = 4;
-                            m.addChild(nextState);
-                            MessageBox.Show("Pawn home by " + maxPlayer+ " "+homepawns2);
+                                oponentState = reinitialize(m.Representation[0]);
+                                nextState.Representation[0] = oponentState;
+                                nextState.score = 4;
+                                m.addChild(nextState);
+                            }
+                            else
+                            {
+                                Move nextState = new Move();
+                                nextState.parent = m;
+                                nextState.Representation[1] = currentState;
 
+                                oponentState = reinitialize(m.Representation[0]);
+                                nextState.Representation[0] = oponentState;
+                                nextState.score = 1;
+                                m.addChild(nextState);
+                            }
                         }
                         else
                         {
@@ -345,8 +390,8 @@ namespace LudoMinMax
 
         public static int[] reinitialize(int[] actualState)
         {
-            int[] state = new int[48];
-            for (int i = 0; i < 48; i++)
+            int[] state = new int[52];
+            for (int i = 0; i < 52; i++)
             {
                 state[i] = actualState[i];
             }
@@ -430,7 +475,15 @@ namespace LudoMinMax
 
             map.Add(47, new Tuple<int, int>(12, 6));
 
-            for (int i = 0; i < map.Count; i++)
+            //adding 4 home fields
+            offset = 48;
+            for (int i = 11; i >= 8; i--)
+            {
+                map.Add(offset, new Tuple<int, int>(i, 6));
+                offset += 1;
+            }
+
+            for (int i = 0; i < map.Count -4; i++)
             {
                 Tuple<int, int> position = map[i];
                 int x = position.Item1;
@@ -495,6 +548,13 @@ namespace LudoMinMax
             }
             map2.Add(47, new Tuple<int, int>(0, 6)); //[47]
 
+            //adding 4 home fields
+            offset = 48;
+            for (int i = 1; i <= 4; i++)
+            {
+                map2.Add(offset, new Tuple<int, int>(i, 6));
+                offset += 1;
+            }
 
             List<int> indexes1 = new List<int>();
             List<int> indexes2 = new List<int>();
